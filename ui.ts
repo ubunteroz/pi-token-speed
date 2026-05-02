@@ -22,6 +22,7 @@ const colorHex = (text: string, hex: string): string => {
 
 /**
  * Maps TPS value to a hex color string, or "" for no color
+ *
  * @param tps The TPS value to colorize
  * @returns The hex color string
  */
@@ -29,11 +30,12 @@ const getColor = (tps: number | null): string => {
   const config = getConfig();
   if (tps == null) return "";
 
-  if (tps < config.tpsSlow) return config.colorSlow;
-  if (tps < config.tpsMedium) return config.colorMedium;
-  if (tps < config.tpsFast) return config.colorFast;
+  if (tps > config.tpsBlazing) return config.colorBlazing;
+  if (tps > config.tpsFast) return config.colorFast;
+  if (tps > config.tpsMedium) return config.colorMedium;
+  if (tps > config.tpsSlow) return config.colorSlow;
 
-  return config.colorBlazing;
+  return "";
 };
 
 /**

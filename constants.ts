@@ -9,22 +9,28 @@ export const STATUS_KEY = "token-speed";
 export const TPS_WINDOW_MS = 1000;
 
 /**
- * TPS threshold below which speed is considered slow
+ * TPS threshold above which speed is considered slow
+ * Anything below this will not be colored
  */
-export const TPS_THRESHOLD_SLOW = 15;
+export const TPS_THRESHOLD_SLOW = 0;
 
 /**
- * TPS threshold below which speed is considered medium
+ * TPS threshold above which speed is considered medium
  */
-export const TPS_THRESHOLD_MEDIUM = 30;
+export const TPS_THRESHOLD_MEDIUM = 15;
 
 /**
- * TPS threshold below which speed is considered fast
+ * TPS threshold above which speed is considered fast
  */
-export const TPS_THRESHOLD_FAST = 45;
+export const TPS_THRESHOLD_FAST = 30;
 
 /**
- * Color used when TPS is below the slow threshold
+ * TPS threshold above which speed is considered blazing
+ */
+export const TPS_THRESHOLD_BLAZING = 45;
+
+/**
+ * Color used when TPS is above the slow threshold
  */
 export const COLOR_SLOW = "#ff4444";
 

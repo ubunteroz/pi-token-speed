@@ -2,13 +2,13 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-import { STATUS_KEY } from "./constants";
-
 import {
   COLOR_BLAZING,
   COLOR_FAST,
   COLOR_MEDIUM,
   COLOR_SLOW,
+  STATUS_KEY,
+  TPS_THRESHOLD_BLAZING,
   TPS_THRESHOLD_FAST,
   TPS_THRESHOLD_MEDIUM,
   TPS_THRESHOLD_SLOW,
@@ -18,6 +18,7 @@ export interface TokenSpeedConfig {
   tpsSlow: number;
   tpsMedium: number;
   tpsFast: number;
+  tpsBlazing: number;
   colorSlow: string;
   colorMedium: string;
   colorFast: string;
@@ -56,8 +57,9 @@ export function getConfig(): TokenSpeedConfig {
 
   const response = {
     tpsSlow: userSettings.tpsSlow ?? TPS_THRESHOLD_SLOW,
-    tpsMedium:userSettings.tpsMedium ?? TPS_THRESHOLD_MEDIUM,
+    tpsMedium: userSettings.tpsMedium ?? TPS_THRESHOLD_MEDIUM,
     tpsFast: userSettings.tpsFast ?? TPS_THRESHOLD_FAST,
+    tpsBlazing: userSettings.tpsBlazing ?? TPS_THRESHOLD_BLAZING,
     colorSlow: userSettings.colorSlow ?? COLOR_SLOW,
     colorMedium: userSettings.colorMedium ?? COLOR_MEDIUM,
     colorFast: userSettings.colorFast ?? COLOR_FAST,
