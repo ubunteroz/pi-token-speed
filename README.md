@@ -7,7 +7,7 @@ A [Pi Coding Agent](https://pi.dev/) extension that displays real-time **tokens-
 - **Real-time TPS tracking** — measures token throughput as the assistant generates text and thinking content
 - **Sliding window calculation** — uses a 1-second sliding window for accurate, responsive metrics
 - **Color-coded speed indicators** — visual feedback based on performance thresholds
-- **Fully configurable** — customize thresholds and colors via `~/.pi/agent/settings.json`
+- **Fully configurable** — customize display, thresholds and colors via `~/.pi/agent/settings.json`
 
 ## Speed Tiers
 
@@ -34,11 +34,12 @@ pi install https://github.com/gsanhueza/pi-token-speed
 
 ## Configuration
 
-You can customize speed thresholds and colors by adding a `token-speed` section to your `~/.pi/agent/settings.json`:
+You can customize speed thresholds and colors by adding a `tokenSpeed` section to your `~/.pi/agent/settings.json`:
 
 ```json
 {
-  "token-speed": {
+  "tokenSpeed": {
+    "display": "tps",
     "tpsSlow": 0,
     "tpsMedium": 15,
     "tpsFast": 30,
@@ -55,6 +56,7 @@ You can customize speed thresholds and colors by adding a `token-speed` section 
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
+| `display` | string | `tps` | Display only TPS or full information |
 | `tpsSlow` | number | `0` | Minimum TPS threshold ("slow") |
 | `tpsMedium` | number | `15` | TPS above this is "medium" |
 | `tpsFast` | number | `30` | TPS above this is "fast" |
