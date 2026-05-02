@@ -1,7 +1,7 @@
 /**
  * Identifier for the status bar entry
  */
-export const STATUS_KEY = "token-speed";
+export const STATUS_KEY = "tokenSpeed";
 
 /**
  * Sliding window duration in milliseconds for time-based TPS calculation

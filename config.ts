@@ -23,6 +23,7 @@ export interface TokenSpeedConfig {
   colorMedium: string;
   colorFast: string;
   colorBlazing: string;
+  display: "tps" | "full";
 }
 
 // Global settings from the user folder
@@ -64,6 +65,9 @@ export function getConfig(): TokenSpeedConfig {
     colorMedium: userSettings.colorMedium ?? COLOR_MEDIUM,
     colorFast: userSettings.colorFast ?? COLOR_FAST,
     colorBlazing: userSettings.colorBlazing ?? COLOR_BLAZING,
+    display: ["tps", "full"].includes(userSettings.display)
+      ? userSettings.display
+      : "tps",
   };
 
   return response;

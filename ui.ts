@@ -52,6 +52,7 @@ export const renderStatus = (
   tokenCount: number = 0,
   elapsedSeconds: number = 0,
 ): void => {
+  const config = getConfig();
   const theme = ctx.ui.theme;
   const value = tps?.toFixed(1);
 
@@ -59,11 +60,18 @@ export const renderStatus = (
   const measurement = value ? `${value} tok/s` : "--";
 
   const color = getColor(tps);
-  const display = colorHex(measurement, color);
-  const tokens =
-    elapsedSeconds > 0
-      ? `${tokenCount} tok in ${elapsedSeconds.toFixed(1)}s`
-      : `${tokenCount} tok`;
+  const displayValue = colorHex(measurement, color);
 
-  ctx.ui.setStatus(STATUS_KEY, `${label} ${display} (${tokens})`);
+  // Choose how much to show
+  let text = `${label} ${displayValue}`;
+  if (config.display === "full") {
+    let tokensText = `${tokenCount} tok`;
+    if (elapsedSeconds > 0) {
+      tokensText = `${tokensText} in ${elapsedSeconds.toFixed(1)}s`;
+    }
+
+    text = `${text} (${tokensText})`;
+  }
+
+  ctx.ui.setStatus(STATUS_KEY, text);
 };
