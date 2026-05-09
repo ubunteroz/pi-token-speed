@@ -4,12 +4,14 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 
 import { TokenSpeedEngine } from "./engine";
+import { initialize } from "./tools";
 import { renderStatus } from "./ui";
 
 export default (pi: ExtensionAPI) => {
   const engine = new TokenSpeedEngine();
 
   pi.on("session_start", async (_, ctx: ExtensionContext) => {
+    initialize(ctx.ui);
     renderStatus(ctx);
   });
 

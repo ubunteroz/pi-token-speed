@@ -13,63 +13,23 @@ import {
   TPS_THRESHOLD_MEDIUM,
   TPS_THRESHOLD_SLOW,
 } from "./constants";
-
-export interface TokenSpeedConfig {
-  tpsSlow: number;
-  tpsMedium: number;
-  tpsFast: number;
-  tpsBlazing: number;
-  colorSlow: string;
-  colorMedium: string;
-  colorFast: string;
-  colorBlazing: string;
-  display: "tps" | "full";
-}
+import { TokenSpeedConfig } from "./interfaces";
 
 /**
- * Validates that TPS thresholds are in ascending order.
- *
- * @param onWarning Optional callback for config warnings (e.g. invalid thresholds)
- * @returns true if tpsSlow < tpsMedium < tpsFast < tpsBlazing
+ * Cached user settings loaded from ~/.pi/agent/settings.json.
+ * Loaded once and reused for subsequent calls to getConfig().
  */
-function isValidThresholdOrder(
-  config: Partial<TokenSpeedConfig>,
-  onWarning?: (message: string) => void,
-): boolean {
-  const {
-    tpsSlow = TPS_THRESHOLD_SLOW,
-    tpsMedium = TPS_THRESHOLD_MEDIUM,
-    tpsFast = TPS_THRESHOLD_FAST,
-    tpsBlazing = TPS_THRESHOLD_BLAZING,
-  } = config;
-
-  const valid =
-    tpsSlow < tpsMedium && tpsMedium < tpsFast && tpsFast < tpsBlazing;
-
-  if (!valid) {
-    const message = [
-      "[pi-token-speed] TPS thresholds must be in ascending order.",
-      `Found: ${tpsSlow} < ${tpsMedium} < ${tpsFast} < ${tpsBlazing}. `,
-      "Falling back to defaults.",
-    ].join("\n");
-    onWarning?.(message);
-  }
-
-  return valid;
-}
-
-// Global settings from the user folder
 let userSettings: TokenSpeedConfig | null = null;
 
 /**
- * Reads ~/.pi/agent/settings.json and extracts the "STATUS_KEY" key if present.
+ * Reads ~/.pi/agent/settings.json and extracts the "tokenSpeed" settings block.
+ * Returns a partial TokenSpeedConfig containing only the values found in the file.
+ * Defaults are applied by getConfig() after this returns.
  *
- * @param onWarning Optional callback for config warnings (e.g. invalid thresholds)
- * @returns The user settings, or an empty object if not found
+ * @returns A partial TokenSpeedConfig with values from the user's settings file,
+ *          or an empty TokenSpeedConfig if the file or key is missing.
  */
-function readUserSettings(
-  onWarning?: (message: string) => void,
-): TokenSpeedConfig {
+function readUserSettings(): TokenSpeedConfig {
   const emptyResponse = {} as TokenSpeedConfig;
 
   try {
@@ -79,7 +39,6 @@ function readUserSettings(
     const tokenSpeed = settings[STATUS_KEY] as TokenSpeedConfig | undefined;
 
     if (!tokenSpeed) return emptyResponse;
-    if (!isValidThresholdOrder(tokenSpeed, onWarning)) return emptyResponse;
 
     return tokenSpeed;
   } catch {
@@ -91,13 +50,9 @@ function readUserSettings(
 /**
  * Resolves the final config, merging user settings from ~/.pi/agent/settings.json
  * with the built-in constants as fallbacks.
- *
- * @param onWarning Optional callback for config warnings (e.g. invalid thresholds)
  */
-export function getConfig(
-  onWarning?: (message: string) => void,
-): TokenSpeedConfig {
-  userSettings ??= readUserSettings(onWarning);
+export function getConfig(): TokenSpeedConfig {
+  userSettings ??= readUserSettings();
 
   const response: TokenSpeedConfig = {
     tpsSlow: TPS_THRESHOLD_SLOW,

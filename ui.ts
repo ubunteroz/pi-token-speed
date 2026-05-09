@@ -1,7 +1,8 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-import { getConfig, type TokenSpeedConfig } from "./config";
+import { getConfig } from "./config";
 import { STATUS_KEY } from "./constants";
+import { type TokenSpeedConfig } from "./interfaces";
 
 /**
  * Applies a custom hex color using 24-bit truecolor ANSI escape codes.
@@ -52,7 +53,7 @@ export const renderStatus = (
   tokenCount: number = 0,
   elapsedSeconds: number = 0,
 ): void => {
-  const config = getConfig((msg) => ctx.ui.notify(msg, "warning"));
+  const config = getConfig();
   const theme = ctx.ui.theme;
   const value = tps?.toFixed(1);
 
