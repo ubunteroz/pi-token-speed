@@ -30,17 +30,30 @@ export interface TokenSpeedConfig {
  * Validates that TPS thresholds are in ascending order.
  * @returns true if tpsSlow < tpsMedium < tpsFast < tpsBlazing
  */
-function isValidThresholdOrder(config: Partial<TokenSpeedConfig>): boolean {
-  const { tpsSlow, tpsMedium, tpsFast, tpsBlazing } = config;
-  if (
-    tpsSlow == null ||
-    tpsMedium == null ||
-    tpsFast == null ||
-    tpsBlazing == null
-  ) {
-    return true; // Partial config — defaults will fill gaps
+function isValidThresholdOrder(
+  config: Partial<TokenSpeedConfig>,
+  onWarning?: (message: string) => void,
+): boolean {
+  const {
+    tpsSlow = TPS_THRESHOLD_SLOW,
+    tpsMedium = TPS_THRESHOLD_MEDIUM,
+    tpsFast = TPS_THRESHOLD_FAST,
+    tpsBlazing = TPS_THRESHOLD_BLAZING,
+  } = config;
+
+  const valid =
+    tpsSlow < tpsMedium && tpsMedium < tpsFast && tpsFast < tpsBlazing;
+
+  if (!valid) {
+    const message = [
+      "[pi-token-speed] TPS thresholds must be in ascending order.",
+      `Found: ${tpsSlow} < ${tpsMedium} < ${tpsFast} < ${tpsBlazing}. `,
+      "Falling back to defaults.",
+    ].join("\n");
+    onWarning?.(message);
   }
-  return tpsSlow < tpsMedium && tpsMedium < tpsFast && tpsFast < tpsBlazing;
+
+  return valid;
 }
 
 // Global settings from the user folder
@@ -62,18 +75,7 @@ function readUserSettings(
     const tokenSpeed = settings[STATUS_KEY] as TokenSpeedConfig | undefined;
 
     if (!tokenSpeed) return emptyResponse;
-
-    if (!isValidThresholdOrder(tokenSpeed)) {
-      const { tpsSlow, tpsMedium, tpsFast, tpsBlazing } = tokenSpeed;
-      const message = [
-        "[pi-token-speed] TPS thresholds must be in ascending order.",
-        `Found: ${tpsSlow} < ${tpsMedium} < ${tpsFast} < ${tpsBlazing}. `,
-        "Falling back to defaults.",
-      ].join("\n");
-      onWarning?.(message);
-
-      return emptyResponse;
-    }
+    if (!isValidThresholdOrder(tokenSpeed, onWarning)) return emptyResponse;
 
     return tokenSpeed;
   } catch {
