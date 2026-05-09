@@ -33,10 +33,10 @@ export interface TokenSpeedConfig {
 function isValidThresholdOrder(config: Partial<TokenSpeedConfig>): boolean {
   const { tpsSlow, tpsMedium, tpsFast, tpsBlazing } = config;
   if (
-    tpsSlow === undefined ||
-    tpsMedium === undefined ||
-    tpsFast === undefined ||
-    tpsBlazing === undefined
+    tpsSlow == null ||
+    tpsMedium == null ||
+    tpsFast == null ||
+    tpsBlazing == null
   ) {
     return true; // Partial config — defaults will fill gaps
   }
@@ -92,19 +92,23 @@ export function getConfig(
 ): TokenSpeedConfig {
   userSettings ??= readUserSettings(onWarning);
 
-  const response = {
-    tpsSlow: userSettings.tpsSlow ?? TPS_THRESHOLD_SLOW,
-    tpsMedium: userSettings.tpsMedium ?? TPS_THRESHOLD_MEDIUM,
-    tpsFast: userSettings.tpsFast ?? TPS_THRESHOLD_FAST,
-    tpsBlazing: userSettings.tpsBlazing ?? TPS_THRESHOLD_BLAZING,
-    colorSlow: userSettings.colorSlow ?? COLOR_SLOW,
-    colorMedium: userSettings.colorMedium ?? COLOR_MEDIUM,
-    colorFast: userSettings.colorFast ?? COLOR_FAST,
-    colorBlazing: userSettings.colorBlazing ?? COLOR_BLAZING,
-    display: ["tps", "full"].includes(userSettings.display)
-      ? userSettings.display
-      : "tps",
+  const response: TokenSpeedConfig = {
+    tpsSlow: TPS_THRESHOLD_SLOW,
+    tpsMedium: TPS_THRESHOLD_MEDIUM,
+    tpsFast: TPS_THRESHOLD_FAST,
+    tpsBlazing: TPS_THRESHOLD_BLAZING,
+    colorSlow: COLOR_SLOW,
+    colorMedium: COLOR_MEDIUM,
+    colorFast: COLOR_FAST,
+    colorBlazing: COLOR_BLAZING,
+    display: "tps",
+    ...(userSettings as Partial<TokenSpeedConfig>),
   };
+
+  // Validate display — userSettings could have an invalid value
+  if (!["tps", "full"].includes(response.display)) {
+    response.display = "tps";
+  }
 
   return response;
 }
