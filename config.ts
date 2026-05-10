@@ -14,7 +14,7 @@ import {
   TPS_THRESHOLD_SLOW,
 } from "./constants";
 import { TokenSpeedConfig } from "./interfaces";
-import { isValidThresholdOrder } from "./validation";
+import { isValidColorDefinition, isValidThresholdOrder } from "./validation";
 
 /**
  * Cached settings
@@ -83,9 +83,19 @@ export const getConfig = (): {
 
   // Validate thresholds
   if (!isValidThresholdOrder(merged)) {
+    errors.push("");
     errors.push("[pi-token-speed] TPS thresholds must be in ascending order.");
     errors.push(
       `Found: ${merged.tpsSlow} < ${merged.tpsMedium} < ${merged.tpsFast} < ${merged.tpsBlazing}. `,
+    );
+  }
+
+  // Validate colors
+  if (!isValidColorDefinition(merged)) {
+    errors.push("");
+    errors.push(
+      "[pi-token-speed] Colors must be valid 24-bit truecolor ANSI hex strings (e.g., '#00ff88').",
+      `Found: ${merged.colorSlow} | ${merged.colorMedium} | ${merged.colorFast} | ${merged.colorBlazing}.`,
     );
   }
 

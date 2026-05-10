@@ -29,6 +29,28 @@ export const isValidThresholdOrder = (config: TokenSpeedConfig): boolean => {
 };
 
 /**
+ * Validates that color definitions are valid 24-bit truecolor ANSI hex strings.
+ *
+ * @param config The configuration object containing the color definitions.
+ * @returns True if all colors are valid hex strings; false otherwise.
+ */
+export const isValidColorDefinition = (config: TokenSpeedConfig): boolean => {
+  const {
+    colorSlow = COLOR_SLOW,
+    colorMedium = COLOR_MEDIUM,
+    colorFast = COLOR_FAST,
+    colorBlazing = COLOR_BLAZING,
+  } = config;
+
+  return (
+    isValidHex(colorSlow) &&
+    isValidHex(colorMedium) &&
+    isValidHex(colorFast) &&
+    isValidHex(colorBlazing)
+  );
+};
+
+/**
  * Validates that the string is a valid 24-bit truecolor ANSI hex string.
  *
  * @param s The string to validate
