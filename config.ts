@@ -14,12 +14,13 @@ import {
   TPS_THRESHOLD_SLOW,
 } from "./constants";
 import { TokenSpeedConfig } from "./interfaces";
+import { isValidThresholdOrder } from "./validation";
 
 /**
  * Cached settings
  */
 let userSettings: TokenSpeedConfig | null = null;
-let resolvedSettings: TokenSpeedConfig | null = null;
+let config: TokenSpeedConfig | null = null;
 
 /**
  * Reads ~/.pi/agent/settings.json and extracts the "tokenSpeed" settings block.
@@ -68,19 +69,31 @@ const getDefaultConfig = (): TokenSpeedConfig => {
  * Resolves the final config, merging user settings from ~/.pi/agent/settings.json
  * with the built-in constants as fallbacks.
  */
-export const getConfig = (): TokenSpeedConfig => {
-  if (resolvedSettings) return resolvedSettings;
+export const getConfig = (): {
+  config: TokenSpeedConfig;
+  errors: Array<string>;
+} => {
+  const errors: string[] = [];
+  if (config) return { config, errors };
 
   const defaultSettings = getDefaultConfig();
   userSettings ??= readUserSettings();
 
-  const response = { ...defaultSettings, ...userSettings };
+  const merged = { ...defaultSettings, ...userSettings };
 
-  // Validate display — userSettings could have an invalid value
-  if (!["tps", "full"].includes(response.display)) {
-    response.display = "tps";
+  // Validate thresholds
+  if (!isValidThresholdOrder(merged)) {
+    errors.push("[pi-token-speed] TPS thresholds must be in ascending order.");
+    errors.push(
+      `Found: ${merged.tpsSlow} < ${merged.tpsMedium} < ${merged.tpsFast} < ${merged.tpsBlazing}. `,
+    );
   }
 
-  resolvedSettings = response;
-  return response;
+  // Validate display
+  if (!["tps", "full"].includes(merged.display)) {
+    merged.display = "tps";
+  }
+
+  config = { ...merged };
+  return { config, errors };
 };

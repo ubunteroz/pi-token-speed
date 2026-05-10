@@ -1,11 +1,26 @@
 import type {
   ExtensionAPI,
   ExtensionContext,
+  ExtensionUIContext,
 } from "@earendil-works/pi-coding-agent";
 
+import { getConfig } from "./config";
 import { TokenSpeedEngine } from "./engine";
-import { initialize } from "./tools";
 import { renderStatus } from "./ui";
+
+/**
+ * Setup and validation utilities for the token-speed extension.
+ * Handles one-time initialization during session start.
+ *
+ * @param uiHandler The Pi UI handler for displaying notifications and status updates.
+ */
+export function initialize(uiHandler: ExtensionUIContext): void {
+  const { errors } = getConfig();
+  if (errors.length === 0) return;
+
+  const message = errors.join("\n");
+  uiHandler?.notify(message, "warning");
+}
 
 export default (pi: ExtensionAPI) => {
   const engine = new TokenSpeedEngine();

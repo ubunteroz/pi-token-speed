@@ -3,6 +3,7 @@ import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { getConfig } from "./config";
 import { STATUS_KEY } from "./constants";
 import { type TokenSpeedConfig } from "./interfaces";
+import { isValidHex } from "./validation";
 
 /**
  * Applies a custom hex color using 24-bit truecolor ANSI escape codes.
@@ -12,7 +13,7 @@ import { type TokenSpeedConfig } from "./interfaces";
  * @returns The colored text, or the original text if hex is invalid
  */
 const colorHex = (text: string, hex: string): string => {
-  if (!hex || hex.length !== 7) return text;
+  if (!isValidHex(hex)) return text;
 
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -53,7 +54,7 @@ export const renderStatus = (
   tokenCount: number = 0,
   elapsedSeconds: number = 0,
 ): void => {
-  const config = getConfig();
+  const { config } = getConfig();
   const theme = ctx.ui.theme;
   const value = tps?.toFixed(1);
 
