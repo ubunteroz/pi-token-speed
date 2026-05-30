@@ -1,7 +1,6 @@
+import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { readFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
-
 import {
   COLOR_BLAZING,
   COLOR_FAST,
@@ -32,7 +31,7 @@ const readUserSettings = (): TokenSpeedConfig => {
   const emptyResponse = {} as TokenSpeedConfig;
 
   try {
-    const settingsPath = join(homedir(), ".pi", "agent", "settings.json");
+    const settingsPath = join(getAgentDir(), "settings.json");
     const raw = readFileSync(settingsPath, "utf-8");
     const settings = JSON.parse(raw) as Record<string, unknown>;
     const response = settings[STATUS_KEY] as TokenSpeedConfig | undefined;
