@@ -34,7 +34,7 @@ pi install https://github.com/gsanhueza/pi-token-speed
 
 ## Configuration
 
-You can customize speed thresholds and colors by adding a `tokenSpeed` section to your `~/.pi/agent/settings.json`:
+You can customize the display, speed thresholds and colors by adding a `tokenSpeed` section to your `~/.pi/agent/settings.json`:
 
 ```json
 {
@@ -65,6 +65,12 @@ You can customize speed thresholds and colors by adding a `tokenSpeed` section t
 | `colorMedium` | string | `"#ffaa00"` | Color for medium tier |
 | `colorFast` | string | `"#00ff88"` | Color for fast tier |
 | `colorBlazing` | string | `"#44ddff"` | Color for blazing tier |
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `/tps` | Toggle display mode between `tps` (just the speed) and `full` (full information) |
 
 ## How It Works
 
