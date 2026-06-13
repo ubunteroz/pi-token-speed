@@ -66,8 +66,10 @@ export const renderStatus = (
   const color = getColor(config, tps);
   const displayValue = colorHex(measurement, color);
 
+  // Zero-width space to clean colors
+  let text = `${label} ${displayValue}\u200b`;
+
   // Choose how much to show
-  let text = `${label} ${displayValue}`;
   if (config.display === "full") {
     let tokensText = `${tokenCount} tok`;
     if (elapsedSeconds > 0) {
