@@ -11,10 +11,12 @@ export class TokenSpeedEngine {
   private _countedUsageOutput = 0;
 
   private _slidingWindow: number;
+  private _countStrategy: "estimate" | "direct";
 
   constructor() {
     const { config } = getConfig();
     this._slidingWindow = config.slidingWindow;
+    this._countStrategy = config.countStrategy;
   }
 
   /**
@@ -32,7 +34,11 @@ export class TokenSpeedEngine {
       this.recordTokens(usageOutput - this._countedUsageOutput);
       this._countedUsageOutput = usageOutput;
     } else {
-      this.recordTokens(this.estimateTokens(delta));
+      if (this._countStrategy === "estimate") {
+        this.recordTokens(this.estimateTokens(delta));
+      } else {
+        this.recordTokens(1);
+      }
     }
   }
 
@@ -167,6 +173,12 @@ export class TokenSpeedEngine {
   /**
    * Removes the dead prefix of the events array to free memory.
    */
+  private _compact() {
+    if (this._windowStartIndex === 0) return;
+    this._events = this._events.slice(this._windowStartIndex);
+    this._windowStartIndex = 0;
+  }
+
   /**
    * Estimates tokens in a text string.
    * Used as a fallback when the provider doesn't report token counts.
@@ -175,11 +187,5 @@ export class TokenSpeedEngine {
     if (!text) return 0;
     const matches = text.match(/\w+|[^\s\w]/g);
     return matches ? matches.length : 0;
-  }
-
-  private _compact() {
-    if (this._windowStartIndex === 0) return;
-    this._events = this._events.slice(this._windowStartIndex);
-    this._windowStartIndex = 0;
   }
 }

@@ -13,6 +13,7 @@ import { TokenSpeedConfig } from "./interfaces";
 import { readUserSettings, writeUserSettings } from "./settings";
 import {
   isValidColorDefinition,
+  isValidCountStrategy,
   isValidSlidingWindow,
   isValidThresholdOrder,
 } from "./validation";
@@ -29,6 +30,7 @@ let config: TokenSpeedConfig | null = null;
 const getDefaultConfig = (): TokenSpeedConfig => {
   return {
     display: "tps",
+    countStrategy: "direct",
     slidingWindow: SLIDING_WINDOW,
     tpsSlow: TPS_THRESHOLD_SLOW,
     tpsMedium: TPS_THRESHOLD_MEDIUM,
@@ -60,6 +62,11 @@ export const getConfig = (): {
   // Validate display (default to tps)
   if (!["tps", "full"].includes(merged.display)) {
     merged.display = "tps";
+  }
+
+  // Validate count strategy
+  if (!isValidCountStrategy(merged)) {
+    merged.countStrategy = "direct";
   }
 
   // Validate sliding window time

@@ -74,3 +74,14 @@ export const isValidColorDefinition = (config: TokenSpeedConfig): boolean => {
  * @returns True if the string is a valid hex color; false otherwise
  */
 export const isValidHex = (s: string): boolean => /^#[0-9a-fA-F]{6}$/.test(s);
+
+/**
+ * Validates that countStrategy is a recognized value.
+ *
+ * @param config The configuration object containing the count strategy.
+ * @returns True if countStrategy is "estimate" or "direct"; false otherwise.
+ */
+export const isValidCountStrategy = (config: TokenSpeedConfig): boolean => {
+  const { countStrategy } = config;
+  return ["estimate", "direct"].includes(countStrategy);
+};

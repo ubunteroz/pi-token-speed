@@ -13,4 +13,5 @@ export interface TokenSpeedConfig {
   colorBlazing: string;
   display: "tps" | "full";
   slidingWindow: number;
+  countStrategy: "estimate" | "direct";
 }
