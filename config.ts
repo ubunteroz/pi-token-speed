@@ -23,6 +23,7 @@ import {
  */
 let userSettings: TokenSpeedConfig | null = null;
 let config: TokenSpeedConfig | null = null;
+let errors: string[] = [];
 
 /**
  * Retrieves the default configuration object.
@@ -52,7 +53,6 @@ export const getConfig = (): {
   config: TokenSpeedConfig;
   errors: Array<string>;
 } => {
-  const errors: string[] = [];
   if (config) return { config, errors };
 
   const defaultSettings = getDefaultConfig();
@@ -62,28 +62,38 @@ export const getConfig = (): {
 
   // Validate display (default to tps)
   if (!["tps", "full"].includes(merged.display)) {
+    errors.push(`Invalid display "${merged.display}" — defaulting to "tps".`);
     merged.display = "tps";
   }
 
   // Validate count strategy
   if (!isValidCountStrategy(merged)) {
+    errors.push(
+      `Invalid countStrategy "${merged.countStrategy}" — defaulting to "direct".`,
+    );
     merged.countStrategy = "direct";
   }
 
   // Validate useProviderTokens
   if (typeof merged.useProviderTokens !== "boolean") {
+    errors.push(
+      `Invalid useProviderTokens (expected boolean) — defaulting to false.`,
+    );
     merged.useProviderTokens = false;
   }
 
   // Validate sliding window time
   if (!isValidSlidingWindow(merged)) {
+    errors.push(
+      `Invalid slidingWindow "${merged.slidingWindow}" — defaulting to ${SLIDING_WINDOW}.`,
+    );
     merged.slidingWindow = SLIDING_WINDOW;
   }
 
   // Validate thresholds
   if (!isValidThresholdOrder(merged)) {
     errors.push("");
-    errors.push("[pi-token-speed] TPS thresholds must be in ascending order.");
+    errors.push("TPS thresholds must be in ascending order.");
     errors.push(
       `Found: ${merged.tpsSlow} < ${merged.tpsMedium} < ${merged.tpsFast} < ${merged.tpsBlazing}. `,
     );
@@ -93,12 +103,13 @@ export const getConfig = (): {
   if (!isValidColorDefinition(merged)) {
     errors.push("");
     errors.push(
-      "[pi-token-speed] Colors must be valid 24-bit truecolor ANSI hex strings (e.g., '#00ff88').",
+      "Colors must be valid 24-bit truecolor ANSI hex strings (e.g., '#00ff88').",
       `Found: ${merged.colorSlow} | ${merged.colorMedium} | ${merged.colorFast} | ${merged.colorBlazing}.`,
     );
   }
 
   config = { ...merged };
+
   return { config, errors };
 };
 

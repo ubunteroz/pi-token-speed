@@ -20,8 +20,8 @@ export function initialize(uiHandler: ExtensionUIContext): void {
   const { errors } = getConfig();
   if (errors.length === 0) return;
 
-  const message = errors.join("\n");
-  uiHandler?.notify(message, "warning");
+  const message = ["[pi-token-speed]", ...errors].join("\n");
+  uiHandler.notify(message, "warning");
 }
 
 export default (pi: ExtensionAPI) => {
