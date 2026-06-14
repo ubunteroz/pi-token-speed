@@ -1,7 +1,11 @@
 import type { ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { getSettingsListTheme } from "@earendil-works/pi-coding-agent";
 import { SettingsList, type SettingItem } from "@earendil-works/pi-tui";
-import type { CountStrategy, DisplayMode } from "./config-types";
+import type {
+  CountStrategy,
+  DisplayMode,
+  TokenSpeedConfig,
+} from "./config-types";
 import {
   COUNT_STRATEGY_LABELS,
   DISPLAY_LABELS,
@@ -23,40 +27,43 @@ export class CommandManager {
    * @param ctx The context used by Pi
    */
   async runTps(ctx: ExtensionCommandContext): Promise<void> {
-    const defaults = settings.getDefaultConfig();
-    const {
-      display = defaults.display,
-      useProviderTokens = defaults.useProviderTokens,
-      countStrategy = defaults.countStrategy,
-    } = await settings.readUserSettings();
-
-    const items = this.buildSettingsItems(
-      display,
-      useProviderTokens,
-      countStrategy,
-    );
+    const { config } = await settings.getConfig();
+    const items = this.buildSettingsItems(config);
 
     await ctx.ui.custom<void>((_tui, _theme, _kb, done) =>
       this.createSettingsList(
         items,
-        async (id, newValue) => {
-          if (id === "display") {
-            await settings.setConfig({ display: newValue as DisplayMode });
-          } else if (id === "useProviderTokens") {
-            await settings.setConfig({ useProviderTokens: newValue === "on" });
-          } else if (id === "countStrategy") {
-            await settings.setConfig({
-              countStrategy: newValue as CountStrategy,
-            });
-          }
-          await this.renderer.update(ctx);
-        },
+        async (id, newValue) => this.handleSettingChange(id, newValue, ctx),
         done,
       ),
     );
 
     // Re-render with the latest config (cache was already reset by setConfig
     // calls inside the callback, or is still valid if nothing changed)
+    await this.renderer.update(ctx);
+  }
+
+  /**
+   * Handles a settings value change — writes the new value and re-renders.
+   *
+   * @param id The setting identifier
+   * @param newValue The new value to apply
+   * @param ctx The context used by Pi
+   */
+  private async handleSettingChange(
+    id: string,
+    newValue: string,
+    ctx: ExtensionCommandContext,
+  ): Promise<void> {
+    if (id === "display") {
+      await settings.setConfig({ display: newValue as DisplayMode });
+    } else if (id === "useProviderTokens") {
+      await settings.setConfig({ useProviderTokens: newValue === "on" });
+    } else if (id === "countStrategy") {
+      await settings.setConfig({
+        countStrategy: newValue as CountStrategy,
+      });
+    }
     await this.renderer.update(ctx);
   }
 
@@ -85,22 +92,16 @@ export class CommandManager {
   /**
    * Builds the SettingsList items for the token speed settings menu.
    *
-   * @param display Current display mode value
-   * @param useProviderTokens Whether provider tokens are enabled
-   * @param countStrategy Current count strategy value
+   * @param config The resolved configuration
    * @returns The array of SettingItem objects
    */
-  private buildSettingsItems(
-    display: DisplayMode,
-    useProviderTokens: boolean,
-    countStrategy: CountStrategy,
-  ): SettingItem[] {
+  private buildSettingsItems(config: TokenSpeedConfig): SettingItem[] {
     return [
       {
         id: "display",
         label: "Display mode",
         description: "Level of detail to show in the status bar",
-        currentValue: display,
+        currentValue: config.display,
         values: Object.keys(DISPLAY_LABELS) as DisplayMode[],
       },
       {
@@ -108,7 +109,7 @@ export class CommandManager {
         label: "Use provider tokens",
         description:
           "Use the provider's token count instead of this extension's counter",
-        currentValue: useProviderTokens ? "on" : "off",
+        currentValue: config.useProviderTokens ? "on" : "off",
         values: Object.keys(TOGGLE_LABELS),
       },
       {
@@ -116,7 +117,7 @@ export class CommandManager {
         label: "Count strategy",
         description:
           "Direct counting (server streams tokens) vs estimate counting (server streams chunks)",
-        currentValue: countStrategy,
+        currentValue: config.countStrategy,
         values: Object.keys(COUNT_STRATEGY_LABELS) as CountStrategy[],
       },
     ];

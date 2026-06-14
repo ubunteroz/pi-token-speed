@@ -67,7 +67,10 @@ export class SlidingWindow {
     return windowTokenCount / windowDuration;
   }
 
-  /** Removes the dead prefix of the events array to free memory. */
+  /**
+   * Removes the dead prefix of the events array to free memory.
+   * Called periodically when `windowStartIndex` reaches the compaction threshold.
+   */
   private compact(): void {
     if (this.windowStartIndex === 0) return;
     this.events.splice(0, this.windowStartIndex);

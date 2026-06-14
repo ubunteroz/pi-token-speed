@@ -39,6 +39,8 @@ export class Settings {
 
   /**
    * Retrieves the default configuration object.
+   *
+   * @returns The default configuration.
    */
   getDefaultConfig(): TokenSpeedConfig {
     return {
@@ -67,66 +69,72 @@ export class Settings {
 
     const defaults = this.getDefaultConfig();
     const userSettings = await this.readUserSettings();
-    const merged = { ...defaults, ...userSettings };
 
-    this.validateAndMerge(merged);
-    this.cachedConfig = { ...merged };
+    const merged = { ...defaults, ...userSettings };
+    this.cachedConfig = this.validateConfig(merged);
+
     return { config: this.cachedConfig, errors: this.cachedErrors };
   }
 
   /**
    * Validates the merged config, correcting invalid values and recording errors.
+   *
+   * @param config The configuration to check
+   * @returns A corrected configuration
    */
-  private validateAndMerge(merged: TokenSpeedConfig): void {
-    const v = new Validator(merged);
+  private validateConfig(config: TokenSpeedConfig): TokenSpeedConfig {
+    const validator = new Validator(config);
+    const response = { ...config };
 
     // Validate display mode
-    if (!v.isValidDisplayMode()) {
+    if (!validator.isValidDisplayMode()) {
       this.cachedErrors.push(
-        `- Invalid display "${merged.display}" — defaulting to "${DISPLAY_MODE}".`,
+        `- Invalid display "${config.display}" — defaulting to "${DISPLAY_MODE}".`,
       );
-      merged.display = DISPLAY_MODE;
+      response.display = DISPLAY_MODE;
     }
 
     // Validate count strategy
-    if (!v.isValidCountStrategy()) {
+    if (!validator.isValidCountStrategy()) {
       this.cachedErrors.push(
-        `- Invalid countStrategy "${merged.countStrategy}" — defaulting to "${COUNT_STRATEGY}".`,
+        `- Invalid countStrategy "${config.countStrategy}" — defaulting to "${COUNT_STRATEGY}".`,
       );
-      merged.countStrategy = COUNT_STRATEGY;
+      response.countStrategy = COUNT_STRATEGY;
     }
 
     // Validate useProviderTokens
-    if (typeof merged.useProviderTokens !== "boolean") {
+    if (typeof config.useProviderTokens !== "boolean") {
       this.cachedErrors.push(
         `- Invalid useProviderTokens (expected boolean) — defaulting to ${USE_PROVIDER_TOKENS}.`,
       );
-      merged.useProviderTokens = USE_PROVIDER_TOKENS;
+      response.useProviderTokens = USE_PROVIDER_TOKENS;
     }
 
     // Validate sliding window time
-    if (!v.isValidSlidingWindow()) {
+    if (!validator.isValidSlidingWindow()) {
       this.cachedErrors.push(
-        `- Invalid slidingWindow "${merged.slidingWindow}" — defaulting to ${SLIDING_WINDOW}.`,
+        `- Invalid slidingWindow "${config.slidingWindow}" — defaulting to ${SLIDING_WINDOW}.`,
       );
-      merged.slidingWindow = SLIDING_WINDOW;
+      response.slidingWindow = SLIDING_WINDOW;
     }
 
     // Validate thresholds
-    if (!v.isValidThresholdOrder()) {
+    if (!validator.isValidThresholdOrder()) {
       this.cachedErrors.push("- TPS thresholds must be in ascending order.");
       this.cachedErrors.push(
-        `  Found: ${merged.tpsSlow} < ${merged.tpsMedium} < ${merged.tpsFast} < ${merged.tpsBlazing}.`,
+        `  Found: ${config.tpsSlow} < ${config.tpsMedium} < ${config.tpsFast} < ${config.tpsBlazing}.`,
       );
     }
 
     // Validate colors
-    if (!v.isValidColorDefinition()) {
+    if (!validator.isValidColorDefinition()) {
       this.cachedErrors.push(
         "- Colors must be valid 24-bit truecolor ANSI hex strings (e.g., '#00ff88').",
-        `  Found: ${merged.colorSlow} | ${merged.colorMedium} | ${merged.colorFast} | ${merged.colorBlazing}.`,
+        `  Found: ${config.colorSlow} | ${config.colorMedium} | ${config.colorFast} | ${config.colorBlazing}.`,
       );
     }
+
+    return response;
   }
 
   /**
@@ -150,7 +158,7 @@ export class Settings {
    *
    * @returns The TokenSpeed settings object.
    */
-  async readUserSettings(): Promise<TokenSpeedConfig> {
+  private async readUserSettings(): Promise<TokenSpeedConfig> {
     const settings = await this.io.read();
     return (settings[STATUS_KEY] || {}) as TokenSpeedConfig;
   }
@@ -161,7 +169,9 @@ export class Settings {
    *
    * @param partial The partial TokenSpeedConfig to write.
    */
-  async writeUserSettings(partial: Partial<TokenSpeedConfig>): Promise<void> {
+  private async writeUserSettings(
+    partial: Partial<TokenSpeedConfig>,
+  ): Promise<void> {
     const settings = await this.io.read();
     const current = (settings[STATUS_KEY] as Record<string, unknown>) || {};
     settings[STATUS_KEY] = { ...current, ...partial };

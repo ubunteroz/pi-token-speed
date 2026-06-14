@@ -9,21 +9,17 @@ import { Validator } from "./validation";
  * Renderer for the token-speed status bar.
  */
 export class Renderer {
-  private readonly engine: TokenSpeedEngine;
-
   /**
    * Creates a new Renderer bound to an engine.
    */
-  constructor(engine: TokenSpeedEngine) {
-    this.engine = engine;
-  }
+  constructor(private readonly engine: TokenSpeedEngine) {}
 
   /**
    * Applies a custom hex color using 24-bit truecolor ANSI escape codes.
    *
    * @param text The text to colorize
    * @param hex The hex color string, e.g. "#abcdef"
-   * @returns The colored text, or the original text if hex is invalid
+   * @returns The colored text, or the original text if hex is invalid.
    */
   private colorHex(text: string, hex: string): string {
     if (!Validator.isValidHex(hex)) return text;
@@ -40,7 +36,7 @@ export class Renderer {
    *
    * @param config The resolved configuration
    * @param tps The TPS value to colorize
-   * @returns The hex color string
+   * @returns The hex color string, or empty string if no color should be applied.
    */
   private getColor(config: TokenSpeedConfig, tps: number | null): string {
     if (tps == null) return "";
@@ -58,7 +54,7 @@ export class Renderer {
    *
    * @param tokenCount The number of tokens
    * @param elapsedSeconds The elapsed time in seconds
-   * @returns The formatted stats string
+   * @returns The formatted stats string.
    */
   private formatStats(tokenCount: number, elapsedSeconds: number): string {
     if (elapsedSeconds <= 0) return `${tokenCount} tok`;
@@ -69,7 +65,7 @@ export class Renderer {
    * Formats the TTFT portion: "TTFT: <time> ms".
    *
    * @param ttft The TTFT value in milliseconds
-   * @returns The formatted TTFT string
+   * @returns The formatted TTFT string.
    */
   private formatTTFT(ttft: number): string {
     return `TTFT: ${ttft} ms`;
@@ -99,7 +95,7 @@ export class Renderer {
         return ` (${parts.join(" · ")})`;
       }
       default:
-        // Zero-width space
+        // Zero-width space to avoid color bleeding
         return "\u200b";
     }
   }

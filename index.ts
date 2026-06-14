@@ -13,17 +13,24 @@ export default async (pi: ExtensionAPI) => {
   const renderer = new Renderer(engine);
   const commands = new CommandManager(renderer);
 
+  // Command registration
   pi.registerCommand("tps", {
     description:
       "Open settings menu to configure display mode, token counting strategy, and provider token usage",
     handler: (_, ctx: ExtensionCommandContext) => commands.runTps(ctx),
   });
 
+  // Session lifecycle
   pi.on("session_start", async (_, ctx: ExtensionContext) => {
     await engine.initialize();
     await renderer.initialize(ctx);
   });
 
+  pi.on("session_shutdown", async () => {
+    engine.stop();
+  });
+
+  // Streaming lifecycle
   pi.on("message_start", async (event, _ctx: ExtensionContext) => {
     if (event.message?.role === "user") {
       engine.startTTFT();
@@ -37,7 +44,11 @@ export default async (pi: ExtensionAPI) => {
   pi.on("message_update", async (event, ctx: ExtensionContext) => {
     const ev = event.assistantMessageEvent;
 
-    if (["text_start", "thinking_start", "toolcall_start"].includes(ev.type)) {
+    if (
+      ev.type === "text_start" ||
+      ev.type === "thinking_start" ||
+      ev.type === "toolcall_start"
+    ) {
       engine.stopTTFT();
     }
 
@@ -61,9 +72,5 @@ export default async (pi: ExtensionAPI) => {
     if (engine.isStreaming) {
       engine.stop();
     }
-  });
-
-  pi.on("session_shutdown", async () => {
-    engine.stop();
   });
 };

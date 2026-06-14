@@ -27,9 +27,13 @@ export class TokenSpeedEngine {
   }
 
   /**
-   * Record a streaming delta. Uses provider-reported output-token count
-   * when it advances; otherwise falls back to estimating tokens from the
-   * delta text.
+   * Records a streaming delta.
+   *
+   * Uses provider-reported output-token count when available.
+   * Otherwise, falls back to this extension's counter.
+   *
+   * Depending on the count strategy, it counts 1 token per delta (direct),
+   * or approximates number of tokens from the delta text (estimate).
    *
    * @param delta The text/thinking delta string.
    * @param usageOutput Provider-reported cumulative output-token count (optional).
@@ -37,19 +41,22 @@ export class TokenSpeedEngine {
   recordDelta(delta: string, usageOutput?: number): void {
     if (!this._isStreaming) return;
 
-    if (
+    const shouldUseProviderTokens =
       this._useProviderTokens &&
       usageOutput !== undefined &&
-      usageOutput > this._countedUsageOutput
-    ) {
+      usageOutput > this._countedUsageOutput;
+
+    if (shouldUseProviderTokens) {
       this.recordTokens(usageOutput - this._countedUsageOutput);
       this._countedUsageOutput = usageOutput;
+      return;
+    }
+
+    // Fallback: estimate or direct counting
+    if (this._countStrategy === "estimate") {
+      this.recordTokens(this.estimateTokens(delta));
     } else {
-      if (this._countStrategy === "estimate") {
-        this.recordTokens(this.estimateTokens(delta));
-      } else {
-        this.recordTokens(1);
-      }
+      this.recordTokens(1);
     }
   }
 
@@ -122,7 +129,7 @@ export class TokenSpeedEngine {
   /**
    * Starts a new streaming session.
    */
-  start() {
+  start(): void {
     this._tokenCount = 0;
     this._isStreaming = true;
     this._startTime = Date.now();
@@ -142,6 +149,10 @@ export class TokenSpeedEngine {
   /**
    * Records the end timestamp for TTFT measurement.
    * Only captures once per stream (guarded by _ttftEnd).
+   *
+   * Also resets _startTime to this moment, because TTFT represents the
+   * gap before tokens start flowing — TPS calculations should only measure
+   * the period during which tokens are actually being produced.
    */
   stopTTFT(): void {
     if (this._ttftEnd !== 0) return;
@@ -149,22 +160,25 @@ export class TokenSpeedEngine {
     // Record the timestamp
     this._ttftEnd = Date.now();
 
-    // Reconcile the start time of the engine, because
-    // this is the moment the first token is being processed
+    // Align streaming window start with the first token arrival
     this._startTime = Date.now();
   }
 
   /**
-   * Stops streaming
+   * Stops streaming.
    */
-  stop() {
+  stop(): void {
     this._isStreaming = false;
     this._endTime = Date.now();
     this._slidingWindow.reset();
   }
 
-  /** Records a batch of tokens, pushing a timestamped event for TPS calculation. */
-  private recordTokens(tokens: number) {
+  /**
+   * Records a batch of tokens, pushing a timestamped event for TPS calculation.
+   *
+   * @param tokens The number of tokens to record.
+   */
+  private recordTokens(tokens: number): void {
     if (!this._isStreaming || tokens <= 0) return;
 
     this._tokenCount += tokens;
@@ -172,8 +186,11 @@ export class TokenSpeedEngine {
   }
 
   /**
-   * Estimates tokens in a text string.
+   * Estimates tokens in a text string using a word-boundary regex.
    * Used as a fallback when the provider doesn't report token counts.
+   *
+   * @param text The text to estimate token count for.
+   * @returns The estimated number of tokens.
    */
   private estimateTokens(text: string): number {
     if (!text) return 0;
