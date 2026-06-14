@@ -6,6 +6,8 @@ export class TokenSpeedEngine {
   private _tokenCount = 0;
   private _startTime = 0;
   private _endTime = 0;
+  private _ttftStart = 0;
+  private _ttftEnd = 0;
   private _events: { time: number; tokens: number }[] = [];
   private _windowStartIndex = 0;
   private _countedUsageOutput = 0;
@@ -135,6 +137,13 @@ export class TokenSpeedEngine {
   }
 
   /**
+   * Returns time to first token in milliseconds
+   */
+  get ttft(): number {
+    return Math.max(this._ttftEnd - this._ttftStart, 0);
+  }
+
+  /**
    * Starts a new streaming session.
    */
   start() {
@@ -145,6 +154,29 @@ export class TokenSpeedEngine {
     this._events = [];
     this._windowStartIndex = 0;
     this._countedUsageOutput = 0;
+  }
+
+  /**
+   * Records the start timestamp for TTFT measurement.
+   */
+  startTTFT(): void {
+    this._ttftStart = Date.now();
+    this._ttftEnd = 0;
+  }
+
+  /**
+   * Records the end timestamp for TTFT measurement.
+   * Only captures once per stream (guarded by _ttftEnd).
+   */
+  stopTTFT(): void {
+    if (this._ttftEnd !== 0) return;
+
+    // Record the timestamp
+    this._ttftEnd = Date.now();
+
+    // Reconcile the start time of the engine, because
+    // this is the moment the first token is being processed
+    this._startTime = Date.now();
   }
 
   /**

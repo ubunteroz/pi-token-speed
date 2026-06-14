@@ -5,6 +5,7 @@ A [Pi Coding Agent](https://pi.dev/) extension that displays real-time **tokens-
 ## Features
 
 - **Real-time TPS tracking** — measures token throughput as the assistant generates text and thinking content
+- **Time-to-first-token (TTFT)** — measures latency from user message to the first token being generated
 - **Configurable sliding window** — adjust the window size to suit your server speed (default: 1s)
 - **Color-coded speed indicators** — visual feedback based on performance thresholds
 - **Provider-reported counting** — opt in to using provider-reported counts (e.g. Anthropic, OpenAI) instead of the extension's own counter
@@ -117,17 +118,18 @@ The `direct` strategy preserves the original behavior. Use `estimate` when your 
 
 ## Commands
 
-| Command | Description                                                                      |
-| ------- | -------------------------------------------------------------------------------- |
-| `/tps`  | Toggle display mode between `tps` (just the speed) and `full` (full information) |
+| Command | Description                                                                                                |
+| ------- | ---------------------------------------------------------------------------------------------------------- |
+| `/tps`  | Toggle display mode between `tps` (just the speed) and `full` (speed, token count, elapsed time, and TTFT) |
 
 ## How It Works
 
 1. **Session Start** — Renders the initial status bar entry showing `⚡ TPS: --`
 2. **Message Start** — When the assistant begins streaming, the engine starts tracking
-3. **Token Update** — Each text/thinking delta is recorded. If `useProviderTokens` is `true` and the provider reports token counts, those are used directly; otherwise the extension's own counter (controlled by `countStrategy`) is used
-4. **Sliding Window** — TPS is calculated using a configurable time window of token timestamps
-5. **Message End** — The authoritative token count (if available) is used to snap the total, ensuring the final average is exact
+3. **TTFT Measurement** — When the user message starts, a timer begins. The moment the first token (text, thinking, or tool call) is emitted, the elapsed time is recorded as the time-to-first-token (TTFT) in milliseconds
+4. **Token Update** — Each text/thinking delta is recorded. If `useProviderTokens` is `true` and the provider reports token counts, those are used directly; otherwise the extension's own counter (controlled by `countStrategy`) is used
+5. **Sliding Window** — TPS is calculated using a configurable time window of token timestamps
+6. **Message End** — The authoritative token count (if available) is used to snap the total, ensuring the final average is exact
 
 ## Dependencies
 

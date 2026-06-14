@@ -38,7 +38,11 @@ export default (pi: ExtensionAPI) => {
     renderStatus(ctx, engine, true);
   });
 
-  pi.on("message_start", async (event) => {
+  pi.on("message_start", async (event, _ctx: ExtensionContext) => {
+    if (event.message?.role === "user") {
+      engine.startTTFT();
+    }
+
     if (event.message?.role === "assistant") {
       engine.start();
     }
@@ -46,6 +50,11 @@ export default (pi: ExtensionAPI) => {
 
   pi.on("message_update", async (event, ctx: ExtensionContext) => {
     const ev = event.assistantMessageEvent;
+
+    if (["text_start", "thinking_start", "toolcall_start"].includes(ev.type)) {
+      engine.stopTTFT();
+    }
+
     if (ev.type === "text_delta" || ev.type === "thinking_delta") {
       engine.recordDelta(ev.delta, ev.partial?.usage?.output);
       renderStatus(ctx, engine);

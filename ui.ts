@@ -52,7 +52,7 @@ export const renderStatus = (
   engine: TokenSpeedEngine,
   firstRun: boolean = false,
 ): void => {
-  const { tps, tokenCount, elapsedSeconds } = engine;
+  const { tps, tokenCount, elapsedSeconds, ttft } = engine;
 
   const { config } = getConfig();
   const theme = ctx.ui.theme;
@@ -72,8 +72,13 @@ export const renderStatus = (
   // Choose how much to show
   if (config.display === "full") {
     let tokensText = `${tokenCount} tok`;
+
     if (elapsedSeconds > 0) {
+      // Add timings
       tokensText = `${tokensText} in ${elapsedSeconds.toFixed(1)}s`;
+
+      // Add time-to-first-token
+      tokensText = `${tokensText} · TTFT: ${ttft} ms`;
     }
 
     text = `${text} (${tokensText})`;
