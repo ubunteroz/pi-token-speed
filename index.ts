@@ -55,6 +55,18 @@ export default async (pi: ExtensionAPI) => {
     if (ev.type === "text_delta" || ev.type === "thinking_delta") {
       engine.recordDelta(ev.delta, ev.partial?.usage?.output);
       await renderer.update(ctx);
+    } else if (ev.type === "toolcall_delta") {
+      const toolCall = ev.partial?.content?.[ev.contentIndex];
+
+      // Only edit/write tools are processed (token generation, relevant)
+      // The other tools are skipped (prompt processing, not relevant)
+      if (
+        toolCall?.type === "toolCall" &&
+        (toolCall.name === "edit" || toolCall.name === "write")
+      ) {
+        engine.recordDelta(ev.delta, ev.partial?.usage?.output);
+        await renderer.update(ctx);
+      }
     }
   });
 
