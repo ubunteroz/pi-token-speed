@@ -9,6 +9,7 @@ export class TokenSpeedEngine {
   private _ttftStart = 0;
   private _ttftEnd = 0;
   private _countedUsageOutput = 0;
+  private _lastTps = 0;
 
   private _slidingWindow!: SlidingWindow;
   private _windowMs!: number;
@@ -100,24 +101,30 @@ export class TokenSpeedEngine {
 
   /**
    * Returns tokens-per-second based on a time-based sliding window.
-   * Falls back to the overall average during the first window period.
+   *
+   * While streaming, always use the sliding window — even during the first
+   * window period. The old warm-up branch returned tps_avg
+   * (tokenCount / elapsedSeconds), but stopTTFT() resets _startTime to the
+   * first-token moment, so at the very first delta elapsedSeconds is ~1ms
+   * and the average exploded (e.g. 13 tok / 0.001s = 13000 tok/s).
+   * getTps() divides tokens-in-window by the fixed window length, so it is
+   * bounded and ramps smoothly instead of spiking.
    */
   get tps(): number {
-    // While the window is still filling, use the average instead
-    if (this.elapsedMs < this._windowMs) return this.tps_avg;
+    // While streaming, use the bounded sliding-window rate and remember it
+    // so it can be shown when generation stops.
+    if (this.isStreaming) {
+      this._lastTps = this._slidingWindow.getTps(Date.now());
+      return this._lastTps;
+    }
 
-    // While we're stopped, return our last calculation
-    if (!this.isStreaming) return this.tps_avg;
-
-    return this._slidingWindow.getTps(Date.now());
-  }
-
-  /**
-   * Returns average tokens-per-second
-   */
-  private get tps_avg(): number {
-    if (this.elapsedSeconds === 0) return 0;
-    return this.tokenCount / this.elapsedSeconds;
+    // When stopped, freeze the last real reading. Returning tps_avg
+    // (total / elapsed) here spiked for short, high-token generations such
+    // as tool calls: reconcileTotal() snaps the count to the authoritative
+    // usage while stopTTFT() had reset _startTime to the first token, so a
+    // fast tool call gave e.g. 600 tok / 0.03s = 20000 tok/s. The frozen
+    // windowed rate is bounded and reflects the actual end-of-stream speed.
+    return this._lastTps;
   }
 
   /**
@@ -137,6 +144,7 @@ export class TokenSpeedEngine {
     this._endTime = Date.now();
     this._slidingWindow.reset();
     this._countedUsageOutput = 0;
+    this._lastTps = 0;
   }
 
   /**

@@ -59,11 +59,15 @@ export class SlidingWindow {
 
     if (windowTokenCount === 0) return 0;
 
-    // Use actual time span of tokens for finer precision
-    const windowDuration =
-      (now - this.events[this.windowStartIndex].time) / 1000;
-    if (windowDuration === 0) return 0;
-
+    // Always divide by the nominal window length. Using the actual span
+    // (now - oldest event in the window) inflated the rate whenever tokens
+    // arrived in a tight burst: a cluster of deltas sharing a timestamp
+    // collapsed the span to a few ms or sub-ms, producing spikes like
+    // 10000–20000 tok/s. By the time getTps() runs, the engine has already
+    // handled the warm-up period (elapsedMs < windowMs), so the window is
+    // genuinely full-length and this is an accurate windowed tokens-per-
+    // second. (MIN_SLIDING_WINDOW guarantees windowMs > 0.)
+    const windowDuration = this.windowMs / 1000;
     return windowTokenCount / windowDuration;
   }
 
