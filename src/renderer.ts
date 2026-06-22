@@ -130,7 +130,8 @@ export class Renderer {
 
     // Render TPS first
     const { tps } = this.engine;
-    const value = tps?.toFixed(1);
+    // One decimal max; drop the trailing ".0" for whole numbers
+    const value = tps == null ? null : tps.toFixed(1).replace(/\.0$/, "");
     const measurement = value ? `${value} tok/s` : "--";
 
     const color = this.getColor(config, tps);
